@@ -58,21 +58,37 @@ def simulate_data(n_domains, g1_size, g2_size, dist):
         g1 = np.zeros(n_domains, dtype=int)
         g2 = np.zeros(n_domains, dtype=int)
         half = n_domains // 2
-        g1_share = g1_size // half if half>0 else g1_size
-        g2_share = g2_size // (n_domains-half) if n_domains-half>0 else g2_size
+        g1_share = g1_size // half if half > 0 else g1_size
+        g2_share = g2_size // (n_domains - half) if n_domains - half > 0 else g2_size
         g1[:half] = g1_share
         g2[half:] = g2_share
+    elif dist == "Sparse Long Tail":
+        # give each user their own unique domain until we run out
+        g1 = np.zeros(n_domains, dtype=int)
+        g2 = np.zeros(n_domains, dtype=int)
+        # assign one user per domain for group 1
+        for i in range(min(g1_size, n_domains)):
+            g1[i] = 1
+        # assign one user per domain for group 2 (continue from end)
+        for j in range(min(g2_size, n_domains)):
+            g2[-(j+1)] = 1
     return pd.DataFrame({"domain": range(n_domains), "Group1": g1, "Group2": g2})
+
+
+
+
 
 # ---- Dashboard ----
 st.title("Segregation Metrics Explorer")
 
 # Inputs
-n_domains = st.slider("Number of domains", 2, 20, 6)
-g1_size = st.slider("Size of Group 1", 50, 5000, 500)
-g2_size = st.slider("Size of Group 2", 50, 5000, 500)
-dist = st.selectbox("Activity distribution", ["Uniform", "Power law", "Clustered", "Segregated Uniform"])
-
+n_domains = st.slider("Number of domains", 2, 10000, 6)   # now up to 10k
+g1_size = st.slider("Size of Group 1", 50, 10000, 500)    # now up to 10k
+g2_size = st.slider("Size of Group 2", 50, 10000, 500)    # now up to 10k
+dist = st.selectbox(
+    "Activity distribution",
+    ["Uniform", "Power law", "Clustered", "Segregated Uniform", "Sparse Long Tail"]
+)
 # Simulate
 df = simulate_data(n_domains, g1_size, g2_size, dist)
 
